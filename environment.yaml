@@ -1,4 +1,4 @@
-name: scit
+name: jianlin-scit
 channels:
   - pytorch
   - defaults
