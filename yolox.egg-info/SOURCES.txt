@@ -1,8 +1,8 @@
 LICENSE
 README.md
 setup.py
-/data/cvprw/final/SCIT-MCMT-Tracking/yolox/layers/csrc/vision.cpp
-/data/cvprw/final/SCIT-MCMT-Tracking/yolox/layers/csrc/cocoeval/cocoeval.cpp
+/home/biometrics/jianlin/mcmt-tracking/yolox/layers/csrc/vision.cpp
+/home/biometrics/jianlin/mcmt-tracking/yolox/layers/csrc/cocoeval/cocoeval.cpp
 tools/CFG.py
 tools/convert_video.py
 tools/demo_multicam.py
@@ -10,6 +10,7 @@ tools/demo_track.py
 tools/interpolation.py
 tools/metrics.py
 tools/model.py
+tools/multicam_association.py
 tools/multicam_track.py
 tools/mmdet/__init__.py
 tools/mmdet/version.py

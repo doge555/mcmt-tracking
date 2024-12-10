@@ -182,9 +182,10 @@ def cosine_distance(x, y):
     
     
 def find_n_for_clustering(data):
-    err_dist = 100
+    err_dist = 100 # 100
     tracklets = []
     distance_valid_bit = True
+    # distance_valid_bit = False
     for camera in data:
         camera_tracklets = {}
         for track_id, coords in camera.items():
@@ -192,6 +193,8 @@ def find_n_for_clustering(data):
                 camera_tracklets[track_id] = coords[-1]
         tracklets.append(camera_tracklets)
     
+    print("traklets: ", tracklets)
+
     clusters = defaultdict(set)
     cluster_id = 1
     for i in range(len(tracklets)):
@@ -204,11 +207,21 @@ def find_n_for_clustering(data):
                         continue
                     distance = euclidean_distance_2d(coord_i, coord_j)
                     if i == j and distance < err_dist*1.1:
-                        distance_valid_bit = False
+                        # distance_valid_bit = False
+                        pass
                     elif i != j and distance < err_dist:
+                        # distance_valid_bit = True
                         clusters[cluster_id].add((i+1, track_id_i))
                         clusters[cluster_id].add((j+1, track_id_j))
                         cluster_id += 1
+                    # if i == j:
+                    #     continue
+                    # distance = euclidean_distance_2d(coord_i, coord_j)
+                    # if distance < err_dist:
+                    #     distance_valid_bit = True
+                    #     clusters[cluster_id].add((i+1, track_id_i))
+                    #     clusters[cluster_id].add((j+1, track_id_j))
+                    #     cluster_id += 1
     # Merge clusters with common elements
     merged_clusters = []
     for key, value in clusters.items():
@@ -247,6 +260,7 @@ def run_spectral_clustering(position_features, k):
     normalized_eigvecs = eigvecs / np.linalg.norm(eigvecs, axis=1)[:, np.newaxis]
 
     # Perform k-means clustering on the rows of the normalized matrix
+    # normalized_eigvecs = np.real(normalized_eigvecs)
     kmeans = KMeans(n_clusters=k, n_init=10).fit(normalized_eigvecs)
     
     # Cluster assignments
@@ -300,13 +314,13 @@ def save_txt_result(channel_final_output, tracking_result_path, channel_list):
 
 def main(args):
     tracking_result_path = osp.join(args.result_path)
-    with open('homography_list.pkl', 'rb') as file:
+    with open('experiments/mcmt/homography_list.pkl', 'rb') as file:
         loaded_list = pickle.load(file)
     H_list = loaded_list
     
     channel_list = [file for file in os.listdir(tracking_result_path) if not file.startswith(".") and os.path.isdir(os.path.join(tracking_result_path, file))]
     channel_list=natsort.natsorted(channel_list)
-
+    # print(channel_list)
     caps = []
     gts = []
     for channel in channel_list:
@@ -314,6 +328,8 @@ def main(args):
         label_path = os.path.join(tracking_result_path, channel, 'label.txt')
         cap = cv2.VideoCapture(video_path)
         caps.append(cap)
+        # print("video_path: ", video_path)
+        # print("label_path: ", label_path)
         with open(label_path) as label_file:
             gt = label_file.readlines()
         gts.append(gt)
@@ -322,6 +338,7 @@ def main(args):
     vid_height = caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     vid_fps = caps[0].get(cv2.CAP_PROP_FPS)
     vid_length = int(caps[0].get(cv2.CAP_PROP_FRAME_COUNT))
+    # print(vid_length)
 
     channel_track_result = load_SCMT_tracklet(gts, vid_width, vid_height)
     
@@ -342,12 +359,15 @@ def main(args):
         new_id_exist = []
         for idx,cap in enumerate(caps):
             _, frame_img = cap.read()
+            # print(type(frame_img))
             
             defined_track_id = []
             if frame_count in channel_track_result[idx].keys():
                 track_bbox = channel_track_result[idx][frame_count]
                 for frame_bbox in track_bbox:
                     state_bit, avg_foot_point = run_keypoint(frame_bbox, frame_img, keypoint_model, args.device)
+                    # print("for ", frame_count, " frame of the ", idx, " video ", " the state bit is: ", state_bit)
+                    # print("")
                     if state_bit:
                         track_id = frame_bbox[-1]
                         defined_track_id.append(track_id)
@@ -359,17 +379,22 @@ def main(args):
                             channel_id_position[idx][track_id].append((projected_x,projected_y))
                         else:
                             channel_id_position[idx][track_id].append((projected_x,projected_y))
-            
+
+                # print("for video: ", idx, "the channel_id_position: ", channel_id_position[idx])
                 delete_position_list = []
                 for key in channel_id_position[idx].keys():
                     if key not in defined_track_id:
                         delete_position_list.append((idx, key))
                 for obj in delete_position_list:
                     del channel_id_position[obj[0]][obj[1]]
+                # print(delete_position_list)
 
                 channel_track_id = np.array(track_bbox)[:,-1]
                 key_list = list(channel_id_mapping[idx].keys())
                 new_id_exist+= check_dict_keys(channel_track_id, key_list, idx)
+            print("for video: ", idx, "the channel_id_position: ", channel_id_position[idx])
+            print("for video: ", idx, "the channel_id_mapping: ", channel_id_mapping[idx])
+        print("each frame: ", frame_count, "the new id list: ", new_id_exist)
             
         if len(new_id_exist) > 0:
             keypoint_valid_bit = False
@@ -378,13 +403,21 @@ def main(args):
                     keypoint_valid_bit = True
 
             N, distance_valid_bit, merged_clusters = find_n_for_clustering(channel_id_position)
-    
+
+            print("keypoint_valid_bit: ", keypoint_valid_bit)
+            print("distance_valid_bit: ", distance_valid_bit)
+
             if keypoint_valid_bit and distance_valid_bit:
                 matched_id_exist = []
+                new_matched_id_exist = []
                 for idx, tracklets_dic in enumerate(channel_id_position):
                     for key in tracklets_dic.keys():
                         if len(tracklets_dic[key])==3:
                             matched_id_exist.append([idx,key])
+                        # if len(tracklets_dic[key])==3 and [idx, key] in new_id_exist:
+                        #     new_matched_id_exist.append([idx,key])
+                print("matched_id_exist: ", matched_id_exist) # looking into here, suspect here may exisit some issues
+                print("new_id_exist: ", new_id_exist)
                 
                 new_matched_id_exist = [tup for tup in new_id_exist if tup in matched_id_exist]
                 
@@ -468,6 +501,8 @@ def main(args):
         for idx,cap in enumerate(caps):
             if frame_count in channel_track_result[idx].keys():
                 track_bbox = channel_track_result[idx][frame_count]
+                # print("frame count: ", frame_count)
+                # print("track_bbox: ", track_bbox)
                 for frame_bbox in track_bbox:
                     global_x, global_y = -1, -1
                     track_id = frame_bbox[-1]
@@ -479,12 +514,15 @@ def main(args):
                         global_track_id = channel_id_mapping[idx][track_id]
 
                     x,y,w,h = frame_bbox[0], frame_bbox[1], frame_bbox[2]-frame_bbox[0], frame_bbox[3]-frame_bbox[1]
+                    # print("frame_bbox: ", frame_bbox)
 
                     if global_track_id != -1:
                         # Format : channel_final_output -> ([channel],[],...)
                         # channel -> (〈channel_idx〈global_track_id>〈frame_id>〈x> <y>〈w>〈h>〈xworld〉〈yworld〉)
                         channel_final_output[idx].append([idx, global_track_id , frame_count , x, y, w, h, global_x, global_y])
+                        # print("each_frame_bbox_with_global_id IS NOT -1: ", channel_final_output[idx])
                     else:
+                        # print("each_frame_bbox_with_global_id IS -1: ")
                         if track_id in channel_loss[idx].keys():
                             channel_loss[idx][track_id].append([idx, global_track_id , frame_count , x, y, w, h, global_x, global_y])
                         else:

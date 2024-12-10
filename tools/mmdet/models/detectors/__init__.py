@@ -2,19 +2,30 @@
 from .atss import ATSS
 from .autoassign import AutoAssign
 from .base import BaseDetector
+from .base_detr import DetectionTransformer
+from .boxinst import BoxInst
 from .cascade_rcnn import CascadeRCNN
 from .centernet import CenterNet
+from .condinst import CondInst
+from .conditional_detr import ConditionalDETR
 from .cornernet import CornerNet
+from .crowddet import CrowdDet
+from .d2_wrapper import Detectron2Wrapper
+from .dab_detr import DABDETR
 from .ddod import DDOD
+from .ddq_detr import DDQDETR
 from .deformable_detr import DeformableDETR
 from .detr import DETR
+from .dino import DINO
 from .fast_rcnn import FastRCNN
 from .faster_rcnn import FasterRCNN
 from .fcos import FCOS
 from .fovea import FOVEA
 from .fsaf import FSAF
 from .gfl import GFL
+from .glip import GLIP
 from .grid_rcnn import GridRCNN
+from .grounding_dino import GroundingDINO
 from .htc import HybridTaskCascade
 from .kd_one_stage import KnowledgeDistillationSingleStageDetector
 from .lad import LAD
@@ -31,8 +42,11 @@ from .queryinst import QueryInst
 from .reppoints_detector import RepPointsDetector
 from .retinanet import RetinaNet
 from .rpn import RPN
+from .rtmdet import RTMDet
 from .scnet import SCNet
+from .semi_base import SemiBaseDetector
 from .single_stage import SingleStageDetector
+from .soft_teacher import SoftTeacher
 from .solo import SOLO
 from .solov2 import SOLOv2
 from .sparse_rcnn import SparseRCNN
@@ -45,12 +59,6 @@ from .yolo import YOLOV3
 from .yolof import YOLOF
 from .yolox import YOLOX
 
-from .condinst import CondInst
-from .single_stage_boxseg import SingleStageBoxInsDetector
-from .boxlevelset import BoxLevelSet
-from .discobox import DiscoBoxSOLOv2
-from .box2mask import Box2Mask
-
 __all__ = [
     'ATSS', 'BaseDetector', 'SingleStageDetector', 'TwoStageDetector', 'RPN',
     'KnowledgeDistillationSingleStageDetector', 'FastRCNN', 'FasterRCNN',
@@ -60,6 +68,8 @@ __all__ = [
     'VFNet', 'DETR', 'TridentFasterRCNN', 'SparseRCNN', 'SCNet', 'SOLO',
     'SOLOv2', 'DeformableDETR', 'AutoAssign', 'YOLOF', 'CenterNet', 'YOLOX',
     'TwoStagePanopticSegmentor', 'PanopticFPN', 'QueryInst', 'LAD', 'TOOD',
-    'MaskFormer', 'DDOD', 'Mask2Former', 'CondInst', 'SingleStageBoxInsDetector',
-    'BoxLevelSet', 'DiscoBoxSOLOv2', 'Box2Mask'
+    'MaskFormer', 'DDOD', 'Mask2Former', 'SemiBaseDetector', 'SoftTeacher',
+    'RTMDet', 'Detectron2Wrapper', 'CrowdDet', 'CondInst', 'BoxInst',
+    'DetectionTransformer', 'ConditionalDETR', 'DINO', 'DABDETR', 'GLIP',
+    'DDQDETR', 'GroundingDINO'
 ]

@@ -14,7 +14,7 @@ from yolox.utils.visualize import plot_tracking
 from yolox.tracker.tp_tracker import TPTracker
 from yolox.tracking_utils.timer import Timer
 
-from mmdet.apis import init_detector, inference_detector, show_result_pyplot
+from mmdet.apis import init_detector, inference_detector
 import mmcv
 
 from model import SocialImplicit
@@ -177,12 +177,25 @@ def imageflow_demo(det_model, vis_folder, current_time, args, tp_model):
 
                 # mmdet result to dets format [x1,y1,x2,y2,score,class_id]
                 dets_list = []
-                for class_id,class_reuslts in enumerate(det_results):
-                    for dets in class_reuslts:
-                        dets_list.append([dets[0],dets[1],dets[2],dets[3],dets[4],class_id])
+                labels = det_results.pred_instances.labels.cpu().numpy()
+                scores = det_results.pred_instances.scores.cpu().numpy()
+                bboxes = det_results.pred_instances.bboxes.cpu().numpy()
+                concatenated_det_results = (np.concatenate((bboxes, scores.reshape(-1, 1)), axis=1)).tolist()
+                # print("det result labels: ", labels)
+                # print("det result scores: ", scores)
+                # print("det result bboxs: ", bboxes)
+                # print("concatenated_det_results: ", concatenated_det_results)
+                # print("length of det_results: ", len(concatenated_det_results))
+                unique_labels = np.unique(labels)
+                for class_id in unique_labels:
+                    indices = np.where(labels == class_id)[0]
+                    for i in indices:
+                        concatenated_det_results[i].append(class_id)
+                        dets_list.append(concatenated_det_results[i])
               
                 if dets_list is not None:
                     # Run tracker
+                    # print("dets_list: ", np.array(dets_list))
                     online_targets = tracker.update(np.array(dets_list), frame)
                     
                     online_tlwhs = []
