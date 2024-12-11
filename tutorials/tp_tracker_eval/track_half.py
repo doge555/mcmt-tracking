@@ -170,7 +170,7 @@ def main(opt, data_root='/MOT16/train', seqs=['MOT16-02'], exp_name='demo'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='track.py')
-    parser.add_argument('--weights', type=str, default='weight/tp_best_11-26.pth', help='path to weights file')
+    parser.add_argument('--weights', type=str, default='weight/tp_best_12-11.pth', help='path to weights file')
     parser.add_argument('--track-buffer', type=int, default=30, help='tracking buffer')
     parser.add_argument("--track_thresh", type=float, default=0.8, help="tracking confidence threshold")
     parser.add_argument('--min_box_area', type=float, default=10, help='filter out tiny boxes')

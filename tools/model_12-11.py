@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.distributions as tdist
 
-
 class SocialCellLocal(nn.Module):
     def __init__(self,
                  spatial_input=2,
@@ -24,19 +23,11 @@ class SocialCellLocal(nn.Module):
                                        padding=0)
         
         # add new layer
-        # self.spatial = nn.Sequential(
-        #     nn.Upsample(scale_factor=0.5, mode='linear', align_corners=True),
-        #     nn.Conv1d(spatial_output, spatial_output, 3, padding=1),
-        #     nn.Upsample(scale_factor=2, mode='linear'),
-        # )
+        self.spatial = nn.Conv1d(spatial_input, spatial_output, 2, padding=1, dilation=2)
 
         #Temporal Section
         self.highway = nn.Conv1d(temporal_input, temporal_output, 1, padding=0)
-        self.more_tp_feat_cnn = nn.Conv1d(temporal_input,
-                               2*temporal_input,
-                               1,
-                               padding=0)
-        self.tpcnn = nn.Conv1d(2*temporal_input,
+        self.tpcnn = nn.Conv1d(temporal_input,
                                temporal_output,
                                3,
                                padding=1,
@@ -50,7 +41,7 @@ class SocialCellLocal(nn.Module):
                       2).reshape(v_shape[0] * v_shape[3], v_shape[1],
                                  v_shape[2])  #= PED*batch,  [x,y], TIME,
         v_res = self.highway_input(v)
-        v = self.feat_act(self.feat(v)) + v_res
+        v = self.feat_act(self.spatial(v)) + v_res
 
         # new layer
         # v_larger_tempral_range = self.spatial(v)
@@ -59,7 +50,7 @@ class SocialCellLocal(nn.Module):
         #Temporal Section
         v = v.permute(0, 2, 1)
         v_res = self.highway(v)
-        v = self.tpcnn(self.more_tp_feat_cnn(v)) + v_res
+        v = self.tpcnn(v) + v_res
 
         #Final Output
         v = v.permute(0, 2, 1).reshape(v_shape[0], v_shape[3], v_shape[1],
@@ -89,20 +80,13 @@ class SocialCellGlobal(nn.Module):
                                        padding=0)
         
         # add new layer
-        # self.spatial = nn.Sequential(
-        #     nn.Upsample(scale_factor=(0.5, 1), mode='bilinear', align_corners=True),
-        #     nn.Conv2d(spatial_output, spatial_output, (3, 1), padding=(1, 0)),
-        #     nn.Upsample(scale_factor=(2, 1), mode='bilinear'),
-        # )
+        self.spatial = nn.Conv2d(spatial_input, spatial_output, (1, 2), padding=(0, 1), dilation=(1, 2))
 
 
         #Temporal Section
         self.highway = nn.Conv2d(temporal_input, temporal_output, 1, padding=0)
-        self.more_tp_feat_cnn = nn.Conv2d(temporal_input,
-                               2*temporal_input,
-                               1,
-                               padding=0)
-        self.tpcnn = nn.Conv2d(2*temporal_input,
+
+        self.tpcnn = nn.Conv2d(temporal_input,
                                temporal_output,
                                3,
                                padding=1,
@@ -129,7 +113,7 @@ class SocialCellGlobal(nn.Module):
         #Spatial Section
         v_ped = self.ped(v)
         v_res = self.highway_input(v)
-        v = self.feat_act(self.feat(v)) + v_res
+        v = self.feat_act(self.spatial(v)) + v_res
 
         # new layer
         # v_larger_tempral_range = self.spatial(v)
@@ -138,7 +122,7 @@ class SocialCellGlobal(nn.Module):
         #Temporal Section
         v = v.permute(0, 2, 1, 3)
         v_res = self.highway(v)
-        v = self.tpcnn(self.more_tp_feat_cnn(v)) + v_res
+        v = self.tpcnn(v) + v_res
 
         #Fuse Local and Global Streams
         v = v.permute(0, 2, 1, 3)
